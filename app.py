@@ -1,6 +1,7 @@
 from flask import Flask
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, flash
 from flask import send_from_directory
+from flask.helpers import flash
 from flaskext.mysql import MySQL
 from datetime import datetime
 import os
@@ -8,6 +9,7 @@ import os
 from pymysql.cursors import Cursor
 
 app = Flask(__name__)
+app.secret_key="Codoacodo"
 #MODIFICAN LO QUE SEA 
 #modifican otra cosa
 mysql = MySQL()
@@ -31,9 +33,9 @@ def index():
     conn = mysql.connect()
     cursor = conn.cursor()
     cursor.execute(sql)
+    empleados = cursor.fetchall()#traeme todos
+    print(empleados)#mostralos
     conn.commit()
-    empleados = cursor.fetchall()
-    
     return render_template('empleados/index.html', empleados = empleados)
 
 
@@ -77,7 +79,7 @@ def update():
     now = datetime.now()
     tiempo = now.strftime('%Y%H%M%S')
 
-    if _foto.filename != '':
+    if _foto.filename != '': #me aseguro que haya foto
         nuevoNombreFoto = tiempo+_foto.filename
         _foto.save("uploads/" + nuevoNombreFoto)
 
@@ -99,9 +101,13 @@ def create():
 
 @app.route('/store', methods=['POST'])
 def storage():
-    _nombre = request.form['txtNombre']
-    _correo = request.form['txtCorreo']
-    _foto = request.files['txtFoto']
+    _nombre=request.form['txtNombre']
+    _correo=request.form['txtCorreo']
+    _foto=request.files['txtFoto']
+
+    if _nombre=='' or _correo=='' or _foto=='':
+        flash('Falta llenar algun dato')
+        return redirect(url_for('create'))
 
     now = datetime.now()
     tiempo = now.strftime("%Y%H%M%S")
